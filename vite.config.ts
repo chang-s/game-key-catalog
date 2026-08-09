@@ -12,7 +12,7 @@ const lastUpdated = (()=>{
 
 export default defineConfig({
   plugins: [react()],
-  base: '/game-key-catalog/',
+  base: '/',
   define: { __LAST_UPDATED__: JSON.stringify(lastUpdated) },
   test: { environment: 'jsdom', setupFiles: './src/test-setup.ts' }
 });

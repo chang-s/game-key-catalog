@@ -5,7 +5,7 @@ keys by game, platform, availability, and other helpful filters. Visitors can
 search the catalog, open game detail views, and generate or copy a request for a
 key they are interested in.
 
-[Visit the live catalog](https://chang-s.github.io/game-key-catalog/)
+[Visit the live catalog](https://keys.bysola.co/)
 
 This is not a storefront. There are no payments, checkout, user accounts, or
 publicly displayed redemption codes.
