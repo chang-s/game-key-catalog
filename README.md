@@ -1,55 +1,32 @@
-# Sola's Game Key Bakery
+# Game Key Bakery
 
-A small, mobile-first catalog where friends can browse Sola's available game keys and copy a friendly request. It is not a storefront: there are no accounts, payments, checkout, or public redemption codes.
+Game Key Bakery is a cozy, bakery-themed catalog for browsing available game
+keys by game, platform, availability, and other helpful filters. Visitors can
+search the catalog, open game detail views, and generate or copy a request for a
+key they are interested in.
 
-## Running locally
+[Visit the live catalog](https://chang-s.github.io/game-key-catalog/)
 
-Requires Node.js 22.22.2+, Node.js 24.15.0+, or Node.js 26+. Your Node.js 24.19.0 environment is supported. This project uses npm and commits `package-lock.json` for reproducible installs.
+This is not a storefront. There are no payments, checkout, user accounts, or
+publicly displayed redemption codes.
 
-```sh
-npm install
-npm run dev
-```
+## Features
 
-For a lockfile-exact clean install, use `npm ci`.
+- Responsive, mobile-friendly interface
+- Search and filtering for browsing the catalog
+- Platform and availability information
+- Game detail views with key context
+- Easy key-request flow with copyable request text
 
-Open the local address printed in the terminal. Run `npm test` for catalog behavior checks.
+## Built With
 
-## Updating inventory
+- React
+- TypeScript
+- Vite
+- Lucide React
+- Vitest
 
-The existing Google Sheet remains the source of truth. The public site reads only the sanitized snapshot at `src/data/games.json`; it never connects to Google or exposes credentials.
+## About
 
-1. Update and verify the permanent **Game Inventory** sheet according to the local inventory procedure.
-2. Download that tab as a CSV into a private working location outside the public app.
-3. Run `npm run sync -- "path/to/Game Inventory.csv"`.
-4. Copy approved covers named by the Sheet's `Image Filename` into `public/covers/`.
-5. Run `npm test` and `npm run build`, then review the catalog.
-
-The sync script maps the established columns, includes only positive platform quantities, normalizes IDs, and refuses output when it detects a redemption-code-shaped value. Still review every generated diff before publishing. Never put raw portal screenshots, Microsoft URLs, credentials, or redemption codes in public folders.
-
-## Adding new games
-
-Follow the local permanent-ID, cover-naming, classification, formula, and quality-control rules. Do not invent IDs or classifications in the website data. Once the Sheet is verified, use the update workflow above.
-
-## Production build
-
-```sh
-npm run build
-npm run preview
-```
-
-The static site is written to `dist/`. It has no runtime server, required
-environment variables, or persistent storage.
-
-## Deployment
-
-Pushes to `main` are built and deployed automatically to GitHub Pages by
-`.github/workflows/deploy-pages.yml`. The Vite base path is configured for the
-`/game-key-catalog/` project site.
-
-## Public/private boundary
-
-- Public and safe: `src/`, `public/covers/`, configuration, tests, and documentation.
-- Private/local only: `PROJECT.md`, `covers/`, `img/`, `screenshots/`, `catalog/`, `private/`, `source/`, and `working/` (ignored by Git).
-
-The original local source material is preserved in place and is not copied into the app.
+Game Key Bakery is a personal, non-commercial project for presenting an
+available game key catalog in a friendly, easy-to-browse format.
