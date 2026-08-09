@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef, useState } from 'react';
+import { useEffect, useMemo, useRef, useState, type Ref } from 'react';
 import { ArrowLeft, Check, Copy, Globe2, X } from 'lucide-react';
 import type { Game } from '../types';
 
@@ -46,8 +46,8 @@ function GameHeader({ game, className = '', onBack }: { game: Game; className?: 
   </div>;
 }
 
-function GameIdentity({ game }: { game: Game }) {
-  return <div className="dialog-title-block">
+function GameIdentity({ game, blockRef }: { game: Game; blockRef?: Ref<HTMLDivElement> }) {
+  return <div ref={blockRef} className="dialog-title-block">
     <h2 id="dialog-title">{game.title}</h2>
     <span className="game-type-pill">{game.offerType}</span>
   </div>;
@@ -157,6 +157,7 @@ export function GameDialog({ game, onClose }: { game: Game | null; onClose: () =
   const scrollbarThumbRef = useRef<HTMLDivElement>(null);
   const scrollbarDragRef = useRef({ active: false, pointerId: -1, grabOffset: 0 });
   const headerBoundaryRef = useRef<HTMLDivElement>(null);
+  const titleBlockRef = useRef<HTMLDivElement>(null);
   const closeTimerRef = useRef<number | undefined>(undefined);
   const copyTimerRef = useRef<number | undefined>(undefined);
   const dragRef = useRef({ active: false, pointerId: -1, startY: 0, lastY: 0, lastTime: 0, velocity: 0, offset: 0 });
@@ -217,9 +218,20 @@ export function GameDialog({ game, onClose }: { game: Game | null; onClose: () =
     thumb.style.transform = `translateY(${thumbTop}px)`;
   };
 
+  const syncDesktopTitleHeight = () => {
+    const dialog = dialogRef.current;
+    const titleBlock = titleBlockRef.current;
+    if (!dialog || !titleBlock || isMobile()) {
+      dialog?.style.removeProperty('--dialog-title-expanded-height');
+      return;
+    }
+    dialog.style.setProperty('--dialog-title-expanded-height', `${titleBlock.getBoundingClientRect().height}px`);
+  };
+
   useEffect(() => {
     const scroll = scrollRef.current;
     if (!scroll) return;
+    requestAnimationFrame(syncDesktopTitleHeight);
     updateDesktopScrollbar();
     if (typeof ResizeObserver === 'undefined') return;
     const observer = new ResizeObserver(updateDesktopScrollbar);
@@ -312,6 +324,7 @@ export function GameDialog({ game, onClose }: { game: Game | null; onClose: () =
       nextCollapsed = collapsedRef.current ? scrollTop > 8 : scrollTop > 24;
     }
     if (nextCollapsed === collapsedRef.current) return;
+    if (!mobile && nextCollapsed) syncDesktopTitleHeight();
     collapsedRef.current = nextCollapsed;
     setHeaderCollapsed(nextCollapsed);
   };
@@ -418,7 +431,7 @@ export function GameDialog({ game, onClose }: { game: Game | null; onClose: () =
             <GameHeader game={game} className="dialog-header-mobile" />
             <div ref={headerBoundaryRef} className="dialog-header-boundary" aria-hidden="true" />
             <div className="dialog-main-body">
-              <GameIdentity game={game} />
+              <GameIdentity game={game} blockRef={titleBlockRef} />
               {screen === 'details' ? <>
                 <GameMetadata game={game} />
                 <KeySelector
@@ -430,6 +443,7 @@ export function GameDialog({ game, onClose }: { game: Game | null; onClose: () =
                 {game.notes && <section className="good-to-know"><h3>Good to know</h3><p>{game.notes}</p></section>}
               </> : selectedChoice && <RequestMessage game={game} choice={selectedChoice} />}
             </div>
+            <div className="dialog-scroll-range-spacer" aria-hidden="true" />
           </div>
           <div
             ref={scrollbarRef}

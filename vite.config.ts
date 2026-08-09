@@ -14,5 +14,5 @@ export default defineConfig({
   plugins: [react()],
   base: '/',
   define: { __LAST_UPDATED__: JSON.stringify(lastUpdated) },
-  test: { environment: 'jsdom', setupFiles: './src/test-setup.ts' }
+  test: { environment: 'jsdom', setupFiles: './src/test-setup.ts', include: ['src/**/*.test.{ts,tsx}'] }
 });
