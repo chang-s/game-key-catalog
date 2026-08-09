@@ -91,10 +91,11 @@ describe('advanced filter UI',()=>{
     await user.click(screen.getByRole('checkbox',{name:'Steam'}));await user.click(screen.getByRole('checkbox',{name:'Xbox'}));
     await user.click(screen.getByRole('checkbox',{name:'Shooter'}));await user.click(screen.getByRole('checkbox',{name:'Roleplaying'}));
     await user.click(screen.getByRole('checkbox',{name:'Full Game'}));
-    expect(screen.getByText((_,element)=>element?.tagName==='P'&&element.textContent?.trim()==='3 items')).toBeInTheDocument();
+    expect(screen.getByText((_,element)=>element?.tagName==='P'&&element.textContent?.trim()==='7 items')).toBeInTheDocument();
     expect(screen.getByRole('heading',{name:/Halo: Campaign Evolved/})).toBeInTheDocument();
     expect(screen.getByRole('heading',{name:/Gears of War: Reloaded/})).toBeInTheDocument();
     expect(screen.getByRole('heading',{name:/Call of Duty®: Modern Warfare® III/})).toBeInTheDocument();
+    expect(screen.getByRole('heading',{name:/Call of Duty: Black Ops 4 - Digital Deluxe/})).toBeInTheDocument();
   });
 
   it('offers comfortable semantic checkbox rows and an obvious mobile Done action',async()=>{
