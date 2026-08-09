@@ -15,7 +15,9 @@
     "sync": "node scripts/sync-inventory.mjs"
   },
   "dependencies": {
+    "@posthog/react": "1.10.3",
     "lucide-react": "1.30.0",
+    "posthog-js": "1.414.0",
     "react": "19.2.8",
     "react-dom": "19.2.8"
   },

@@ -7,6 +7,7 @@ import { filterGames } from './catalog';
 import { FilterPanel } from './components/FilterPanel';
 import { GameCard } from './components/GameCard';
 import { GameDialog } from './components/GameDialog';
+import { captureAnalyticsEvent, discoveryMethod, filterStateKey, gameAnalyticsProperties, type FilterState, type UiState } from './analytics';
 
 type Sort='az'|'recent'|'keys';
 type FilterKind='platforms'|'genres'|'offers';
@@ -28,7 +29,7 @@ function SeattleClock(){
   return <span className="seattle-clock"><Clock3 aria-hidden/><span>Seattle</span><span aria-hidden="true">·</span><time>{time}</time></span>;
 }
 
-function BakeryButton({className='',celebrate=false}:{className?:string;celebrate?:boolean}){
+function BakeryButton({className='',celebrate=false,onBreadClick}:{className?:string;celebrate?:boolean;onBreadClick?:()=>void}){
   const [burst,setBurst]=useState(0);
   const [celebrating,setCelebrating]=useState(false);
   const [sparkleOrigin,setSparkleOrigin]=useState<{x:number;y:number}|null>(null);
@@ -38,6 +39,8 @@ function BakeryButton({className='',celebrate=false}:{className?:string;celebrat
   const backToTop=()=>{
     const reduced=window.matchMedia('(prefers-reduced-motion: reduce)').matches;
     const bounds=buttonRef.current?.getBoundingClientRect();
+    onBreadClick?.();
+    if(!onBreadClick)captureAnalyticsEvent('bread_clicked',celebrate?{header_state:'expanded',action:'sparkle'}:{header_state:'sticky',action:'scroll_to_top'});
     window.scrollTo({top:0,behavior:reduced?'auto':'smooth'});
     setBurst(value=>value+1);
     setCelebrating(true);
@@ -80,18 +83,67 @@ export default function App(){
   const platformOptions=[...new Set(games.flatMap(g=>Object.keys(g.platformQuantities).filter(p=>g.platformQuantities[p as keyof typeof g.platformQuantities]!>0)))].sort();
   const advancedCount=platforms.length+genres.length+offers.length;
   const filtered=useMemo(()=>filterGames(games,{query,availability,platforms,genres,offers}).sort((a,b)=>sort==='keys'?b.primaryKeys-a.primaryKeys:sort==='recent'?b.dateAdded.localeCompare(a.dateAdded)||a.title.localeCompare(b.title):a.title.localeCompare(b.title)),[games,query,availability,platforms,genres,offers,sort]);
+  const filterState:FilterState=useMemo(()=>({availability,platforms,genres,offers}),[availability,platforms,genres,offers]);
+  const uiState:UiState=isSticky?'sticky':'normal';
+  const resultCountFor=(next:FilterState=filterState,nextQuery=query)=>filterGames(games,{query:nextQuery,availability:next.availability as Availability|'All',platforms:next.platforms,genres:next.genres,offers:next.offers}).length;
+  const searchAnalyticsRef=useRef('');
+  const availabilityAnalyticsRef=useRef(availability);
+  const sortAnalyticsRef=useRef(sort);
+
+  useEffect(()=>{
+    const settledQuery=query.trim();
+    if(!settledQuery){
+      searchAnalyticsRef.current='';
+      return;
+    }
+    const filtersKey=filterStateKey(filterState);
+    const eventKey=`${settledQuery}|${filtered.length}|${uiState}|${filtersKey}`;
+    const timeout=window.setTimeout(()=>{
+      if(searchAnalyticsRef.current===eventKey)return;
+      searchAnalyticsRef.current=eventKey;
+      const properties={query_length:settledQuery.length,results_count:filtered.length,ui_state:uiState};
+      captureAnalyticsEvent('search_used',properties);
+      if(filtered.length===0)captureAnalyticsEvent('search_no_results',{...properties,active_filter_state:filterState});
+    },600);
+    return()=>window.clearTimeout(timeout);
+  },[query,filtered.length,uiState,filterState]);
+
+  useEffect(()=>{
+    if(availabilityAnalyticsRef.current===availability)return;
+    availabilityAnalyticsRef.current=availability;
+    captureAnalyticsEvent('filter_changed',{filter_type:'availability',filter_value:availability,results_count:filtered.length,ui_state:uiState});
+  },[availability,filtered.length,uiState]);
+
+  useEffect(()=>{
+    if(sortAnalyticsRef.current===sort)return;
+    sortAnalyticsRef.current=sort;
+    captureAnalyticsEvent('sort_changed',{sort_value:sort,ui_state:uiState});
+  },[sort,uiState]);
 
   const setters={platforms:setPlatforms,genres:setGenres,offers:setOffers};
-  const toggle=(kind:FilterKind,value:string)=>setters[kind](current=>current.includes(value)?current.filter(item=>item!==value):[...current,value]);
-  const remove=(kind:FilterKind,value:string)=>setters[kind](current=>current.filter(item=>item!==value));
-  const clearAdvanced=()=>{setPlatforms([]);setGenres([]);setOffers([])};
+  const trackFilterChange=(filter_type:string,filter_value:string|string[],next:FilterState)=>captureAnalyticsEvent('filter_changed',{filter_type,filter_value:Array.isArray(filter_value)?filter_value.join(','):filter_value,results_count:resultCountFor(next),ui_state:uiState});
+  const toggle=(kind:FilterKind,value:string)=>setters[kind](current=>{
+    const nextValues=current.includes(value)?current.filter(item=>item!==value):[...current,value];
+    trackFilterChange(kind,nextValues,{...filterState,[kind]:nextValues});
+    return nextValues;
+  });
+  const remove=(kind:FilterKind,value:string)=>setters[kind](current=>{
+    const nextValues=current.filter(item=>item!==value);
+    trackFilterChange(kind,nextValues,{...filterState,[kind]:nextValues});
+    return nextValues;
+  });
+  const clearAdvanced=()=>{
+    const previous={availability,platforms,genres,offers};
+    setPlatforms([]);setGenres([]);setOffers([]);
+    if(previous.platforms.length||previous.genres.length||previous.offers.length)captureAnalyticsEvent('filters_cleared',{previous_filter_state:previous,ui_state:uiState,results_count:resultCountFor({...filterState,platforms:[],genres:[],offers:[]})});
+  };
   const closeFilters=useCallback(()=>{setFiltersOpen(false);filterButtonRef.current?.focus()},[]);
-  const open=(game:Game)=>setSelected(game);
+  const open=(game:Game)=>{captureAnalyticsEvent('game_opened',{...gameAnalyticsProperties(game),discovery_method:discoveryMethod(query,filterState),ui_state:uiState});setSelected(game)};
   const chips=[...platforms.map(value=>({kind:'platforms' as const,value})),...genres.map(value=>({kind:'genres' as const,value})),...offers.map(value=>({kind:'offers' as const,value}))];
 
   return <>
     <header className="masthead" ref={mastheadRef}>
-      <img className="masthead-art" src="./brand/bear-bakery-banner.png" alt="" aria-hidden="true" />
+      <img className="masthead-art" src="./brand/bear-bakery-banner.webp" alt="" aria-hidden="true" />
       <div className="brand"><BakeryButton className="mark" celebrate/><div><h1>Sola’s Game Key Bakery</h1><p>Fresh game keys looking for a good home ♡</p><div className="bakery-meta"><span>Last updated · <time dateTime={__LAST_UPDATED__}>{updatedLabel}</time></span><SeattleClock/></div></div></div>
       <p className="intro">I get extra game keys from time to time and share them with friends. Find one you’d enjoy and copy a request!</p>
     </header>

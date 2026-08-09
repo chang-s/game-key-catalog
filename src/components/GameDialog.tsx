@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useRef, useState, type Ref } from 'react';
 import { ArrowLeft, Check, Copy, Globe2, X } from 'lucide-react';
 import type { Game } from '../types';
+import { captureAnalyticsEvent, gameAnalyticsProperties } from '../analytics';
 
 export type RequestChoice =
   | { kind: 'primary'; platform: string; quantity: number }
@@ -34,6 +35,15 @@ const choiceId = (choice: RequestChoice) => choice.kind === 'primary'
   : `regional:${choice.platform}:${choice.region}`;
 
 const quantityText = (quantity: number) => `${quantity} available`;
+
+function requestChoiceAnalyticsProperties(choice: RequestChoice) {
+  return {
+    platform: choice.platform,
+    region: choice.kind === 'regional' ? choice.region : 'US / Global',
+    key_scope: choice.kind,
+    key_quantity: choice.quantity,
+  };
+}
 
 function GameHeader({ game, className = '', onBack }: { game: Game; className?: string; onBack?: () => void }) {
   return <div className={`dialog-header ${className}`}>
@@ -124,7 +134,7 @@ function RequestMessage({ game, choice }: { game: Game; choice: RequestChoice })
     <section className="copy-instructions" aria-labelledby="copy-instructions-title">
       <h3 id="copy-instructions-title">Copy &amp; send to Sola</h3>
       <p>Copy the message below and send it to Sola!</p>
-      <div className="message-preview">{buildRequestMessage(game, choice)}</div>
+      <div className="message-preview ph-no-capture ph-mask">{buildRequestMessage(game, choice)}</div>
     </section>
   </>;
 }
@@ -158,8 +168,10 @@ export function GameDialog({ game, onClose }: { game: Game | null; onClose: () =
   const scrollbarDragRef = useRef({ active: false, pointerId: -1, grabOffset: 0 });
   const headerBoundaryRef = useRef<HTMLDivElement>(null);
   const titleBlockRef = useRef<HTMLDivElement>(null);
+  const openerRef = useRef<HTMLElement | null>(null);
   const closeTimerRef = useRef<number | undefined>(undefined);
   const copyTimerRef = useRef<number | undefined>(undefined);
+  const closeCapturedRef = useRef(false);
   const dragRef = useRef({ active: false, pointerId: -1, startY: 0, lastY: 0, lastTime: 0, velocity: 0, offset: 0 });
   const collapsedRef = useRef(false);
   const [screen, setScreen] = useState<ModalScreen>('details');
@@ -186,15 +198,25 @@ export function GameDialog({ game, onClose }: { game: Game | null; onClose: () =
       dialog?.close();
       return;
     }
+    openerRef.current = document.activeElement instanceof HTMLElement ? document.activeElement : null;
     setScreen('details');
     setSelectedId('');
     setCopied(false);
     setHeaderCollapsed(false);
+    closeCapturedRef.current = false;
     collapsedRef.current = false;
     dialog?.classList.remove('is-closing', 'is-dragging');
     dialog?.style.removeProperty('--sheet-drag');
     dialog?.style.removeProperty('--backdrop-alpha');
     dialog?.showModal();
+    requestAnimationFrame(() => {
+      const active = document.activeElement;
+      if (!dialog?.open || active && dialog.contains(active)) return;
+      const target = isMobile()
+        ? dialog.querySelector<HTMLElement>('.dialog-main-body input:not([disabled]), .dialog-main-body button:not([disabled])')
+        : dialog.querySelector<HTMLElement>('.close, .dialog-main-body input:not([disabled]), .dialog-main-body button:not([disabled])');
+      target?.focus({ preventScroll: true });
+    });
   }, [game]);
 
   useEffect(() => () => {
@@ -243,10 +265,22 @@ export function GameDialog({ game, onClose }: { game: Game | null; onClose: () =
 
   useEffect(() => {
     const dialog = dialogRef.current;
-    const handleClose = () => onClose();
+    const handleClose = () => {
+      if (game && !closeCapturedRef.current) {
+        closeCapturedRef.current = true;
+        captureAnalyticsEvent('game_modal_closed', {
+          ...gameAnalyticsProperties(game),
+          stage: screen === 'request' ? 'request' : 'details',
+        });
+      }
+      onClose();
+      const opener = openerRef.current;
+      if (opener?.isConnected) opener.focus({ preventScroll: true });
+      openerRef.current = null;
+    };
     dialog?.addEventListener('close', handleClose);
     return () => dialog?.removeEventListener('close', handleClose);
-  }, [onClose]);
+  }, [game, onClose, screen]);
 
   if (!game) return <dialog ref={dialogRef} />;
 
@@ -264,6 +298,13 @@ export function GameDialog({ game, onClose }: { game: Game | null; onClose: () =
   const dismiss = () => {
     const dialog = dialogRef.current;
     if (!dialog?.open) return;
+    if (!closeCapturedRef.current) {
+      closeCapturedRef.current = true;
+      captureAnalyticsEvent('game_modal_closed', {
+        ...gameAnalyticsProperties(game),
+        stage: screen === 'request' ? 'request' : 'details',
+      });
+    }
     if (!isMobile() || reducedMotion()) {
       dialog.close();
       return;
@@ -291,12 +332,42 @@ export function GameDialog({ game, onClose }: { game: Game | null; onClose: () =
     setScreen(nextScreen);
   };
 
+  const showRequestScreen = () => {
+    if (!selectedChoice) return;
+    captureAnalyticsEvent('request_key_clicked', {
+      ...gameAnalyticsProperties(game),
+      ...requestChoiceAnalyticsProperties(selectedChoice),
+    });
+    showScreen('request');
+  };
+
+  const showDetailsScreen = () => {
+    captureAnalyticsEvent('request_back_clicked', gameAnalyticsProperties(game));
+    showScreen('details');
+  };
+
   const copyRequest = async () => {
     if (!selectedChoice) return;
     await navigator.clipboard.writeText(buildRequestMessage(game, selectedChoice));
+    captureAnalyticsEvent('request_message_copied', {
+      ...gameAnalyticsProperties(game),
+      ...requestChoiceAnalyticsProperties(selectedChoice),
+    });
     window.clearTimeout(copyTimerRef.current);
     setCopied(true);
     copyTimerRef.current = window.setTimeout(() => setCopied(false), 1800);
+  };
+
+  const selectChoice = (id: string) => {
+    const choice = choices.find(item => choiceId(item) === id);
+    setSelectedId(id);
+    setCopied(false);
+    if (!choice) return;
+    captureAnalyticsEvent('request_option_selected', {
+      ...gameAnalyticsProperties(game),
+      option_type: choice.kind === 'regional' ? 'regional_key' : 'platform',
+      option_value: choice.kind === 'regional' ? `${choice.platform}:${choice.region}` : choice.platform,
+    });
   };
 
   const handleScroll = (event: React.UIEvent<HTMLDivElement>) => {
@@ -423,7 +494,7 @@ export function GameDialog({ game, onClose }: { game: Game | null; onClose: () =
       <GameHeader
         game={game}
         className="dialog-header-desktop"
-        onBack={screen === 'request' ? () => showScreen('details') : undefined}
+        onBack={screen === 'request' ? showDetailsScreen : undefined}
       />
       <div className="dialog-panel">
         <div className="dialog-content">
@@ -438,7 +509,7 @@ export function GameDialog({ game, onClose }: { game: Game | null; onClose: () =
                   primaryChoices={primaryChoices}
                   regionalChoices={regionalChoices}
                   selectedId={selectedId}
-                  onSelect={id => { setSelectedId(id); setCopied(false); }}
+                  onSelect={selectChoice}
                 />
                 {game.notes && <section className="good-to-know"><h3>Good to know</h3><p>{game.notes}</p></section>}
               </> : selectedChoice && <RequestMessage game={game} choice={selectedChoice} />}
@@ -460,10 +531,10 @@ export function GameDialog({ game, onClose }: { game: Game | null; onClose: () =
             screen={screen}
             canRequest={Boolean(selectedChoice)}
             copied={copied}
-            onRequest={() => showScreen('request')}
+            onRequest={showRequestScreen}
             onCopy={copyRequest}
             onClose={dismiss}
-            onBack={() => showScreen('details')}
+            onBack={showDetailsScreen}
           />
         </div>
       </div>
