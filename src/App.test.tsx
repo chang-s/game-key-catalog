@@ -91,7 +91,7 @@ describe('advanced filter UI',()=>{
     await user.click(screen.getByRole('checkbox',{name:'Steam'}));await user.click(screen.getByRole('checkbox',{name:'Xbox'}));
     await user.click(screen.getByRole('checkbox',{name:'Shooter'}));await user.click(screen.getByRole('checkbox',{name:'Roleplaying'}));
     await user.click(screen.getByRole('checkbox',{name:'Full Game'}));
-    expect(screen.getByText((_,element)=>element?.tagName==='P'&&element.textContent?.trim()==='15 items')).toBeInTheDocument();
+    expect(screen.getByText((_,element)=>element?.tagName==='P'&&element.textContent?.trim()==='17 items')).toBeInTheDocument();
     expect(screen.getByRole('heading',{name:/Halo: Campaign Evolved/})).toBeInTheDocument();
     expect(screen.getByRole('heading',{name:/Gears of War: Reloaded/})).toBeInTheDocument();
     expect(screen.getByRole('heading',{name:/Call of Duty®: Modern Warfare® III/})).toBeInTheDocument();
@@ -102,6 +102,8 @@ describe('advanced filter UI',()=>{
     expect(screen.getByRole('heading',{name:/DOOM \(2016\)/})).toBeInTheDocument();
     expect(screen.getByRole('heading',{name:/The Elder Scrolls III: Morrowind/})).toBeInTheDocument();
     expect(screen.getByRole('heading',{name:/Wolfenstein: The Old Blood/})).toBeInTheDocument();
+    expect(screen.getByRole('heading',{name:/DOOM Eternal Standard Edition/})).toBeInTheDocument();
+    expect(screen.getByRole('heading',{name:/The Elder Scrolls® Online/})).toBeInTheDocument();
   });
 
   it('offers comfortable semantic checkbox rows and an obvious mobile Done action',async()=>{
