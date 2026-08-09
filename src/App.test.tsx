@@ -57,8 +57,9 @@ describe('advanced filter UI',()=>{
     await user.click(screen.getByRole('checkbox',{name:'Steam'}));await user.click(screen.getByRole('checkbox',{name:'Xbox'}));
     await user.click(screen.getByRole('checkbox',{name:'Shooter'}));await user.click(screen.getByRole('checkbox',{name:'Roleplaying'}));
     await user.click(screen.getByRole('checkbox',{name:'Full Game'}));
-    expect(screen.getByText((_,element)=>element?.tagName==='P'&&element.textContent?.trim()==='1 item')).toBeInTheDocument();
+    expect(screen.getByText((_,element)=>element?.tagName==='P'&&element.textContent?.trim()==='2 items')).toBeInTheDocument();
     expect(screen.getByRole('heading',{name:/Halo: Campaign Evolved/})).toBeInTheDocument();
+    expect(screen.getByRole('heading',{name:/Gears of War: Reloaded/})).toBeInTheDocument();
   });
 
   it('offers comfortable semantic checkbox rows and an obvious mobile Done action',async()=>{
