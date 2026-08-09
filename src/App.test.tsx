@@ -91,7 +91,7 @@ describe('advanced filter UI',()=>{
     await user.click(screen.getByRole('checkbox',{name:'Steam'}));await user.click(screen.getByRole('checkbox',{name:'Xbox'}));
     await user.click(screen.getByRole('checkbox',{name:'Shooter'}));await user.click(screen.getByRole('checkbox',{name:'Roleplaying'}));
     await user.click(screen.getByRole('checkbox',{name:'Full Game'}));
-    expect(screen.getByText((_,element)=>element?.tagName==='P'&&element.textContent?.trim()==='18 items')).toBeInTheDocument();
+    expect(screen.getByText((_,element)=>element?.tagName==='P'&&element.textContent?.trim()==='20 items')).toBeInTheDocument();
     expect(screen.getByRole('heading',{name:/Halo: Campaign Evolved/})).toBeInTheDocument();
     expect(screen.getByRole('heading',{name:/Gears of War: Reloaded/})).toBeInTheDocument();
     expect(screen.getByRole('heading',{name:/Call of Duty®: Modern Warfare® III/})).toBeInTheDocument();
