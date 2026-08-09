@@ -1,0 +1,28 @@
+node_modules/
+.pnpm-store/
+dist/
+.vite/
+coverage/
+*.tsbuildinfo
+.env*
+!.env.example
+
+# Private inventory source material — never publish
+screenshots/
+catalog/
+private/
+source/
+working/
+/covers/
+/img/
+/PROJECT.md
+*.token
+*.code
+*.key
+
+# Local/editor files
+.DS_Store
+Thumbs.db
+*.log
+.idea/
+.vscode/
