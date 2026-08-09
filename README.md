@@ -19,7 +19,7 @@ Open the local address printed in the terminal. Run `npm test` for catalog behav
 
 The existing Google Sheet remains the source of truth. The public site reads only the sanitized snapshot at `src/data/games.json`; it never connects to Google or exposes credentials.
 
-1. Update and verify the permanent **Game Inventory** sheet according to `PROJECT.md`.
+1. Update and verify the permanent **Game Inventory** sheet according to the local inventory procedure.
 2. Download that tab as a CSV into a private working location outside the public app.
 3. Run `npm run sync -- "path/to/Game Inventory.csv"`.
 4. Copy approved covers named by the Sheet's `Image Filename` into `public/covers/`.
@@ -29,29 +29,27 @@ The sync script maps the established columns, includes only positive platform qu
 
 ## Adding new games
 
-Follow the permanent ID, cover naming, classification, formula, and quality-control rules in `PROJECT.md`. Do not invent IDs or classifications in the website data. Once the Sheet is verified, use the update workflow above.
+Follow the local permanent-ID, cover-naming, classification, formula, and quality-control rules. Do not invent IDs or classifications in the website data. Once the Sheet is verified, use the update workflow above.
 
 ## Production build
 
 ```sh
 npm run build
-npm start
+npm run preview
 ```
 
-The static site is written to `dist/`. The production server binds to `0.0.0.0`
-and uses the platform-provided `PORT`, defaulting to port 3000 locally. It has no
-runtime dependencies, required environment variables, or persistent storage.
+The static site is written to `dist/`. It has no runtime server, required
+environment variables, or persistent storage.
 
 ## Deployment
 
-The Vite `base` setting uses relative assets, so `dist/` can be hosted on Railway,
-GitHub Pages, a container, or another static host. On a Node hosting platform, use
-`npm ci`, `npm run build`, and `npm start`. `PORT` is supplied by the host and is
-the only supported runtime setting; it is operational rather than secret.
+Pushes to `main` are built and deployed automatically to GitHub Pages by
+`.github/workflows/deploy-pages.yml`. The Vite base path is configured for the
+`/game-key-catalog/` project site.
 
 ## Public/private boundary
 
 - Public and safe: `src/`, `public/covers/`, configuration, tests, and documentation.
-- Private/local only: `screenshots/`, `catalog/`, `private/`, `source/`, and `working/` (ignored by Git).
+- Private/local only: `PROJECT.md`, `covers/`, `img/`, `screenshots/`, `catalog/`, `private/`, `source/`, and `working/` (ignored by Git).
 
 The original local source material is preserved in place and is not copied into the app.
