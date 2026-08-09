@@ -14,6 +14,40 @@ describe('advanced filter UI',()=>{
     expect(container.querySelector('.masthead-art')).toHaveAttribute('src','./brand/bear-bakery-banner.png');
     expect(container.querySelector('.mark img')).toHaveAttribute('src','./brand/white-bread.png');
     expect(screen.getByText('made for friends to enjoy! 💖')).toBeInTheDocument();
+    expect(screen.getByText(/Last updated/)).toBeInTheDocument();
+    expect(screen.getByText('Seattle')).toBeInTheDocument();
+    expect(container.querySelector('.sticky-brand img')).toHaveAttribute('src','./brand/white-bread.png');
+    expect(screen.getAllByRole('button',{name:'Back to top'})).toHaveLength(2);
+    expect(screen.queryByText('Game Key Bakery')).not.toBeInTheDocument();
+  });
+
+  it('returns to the top from either bakery icon',async()=>{
+    const scrollTo=vi.spyOn(window,'scrollTo').mockImplementation(()=>{});
+    const user=userEvent.setup();render(<App/>);
+    await user.click(screen.getAllByRole('button',{name:'Back to top'})[0]);
+    expect(scrollTo).toHaveBeenCalledWith({top:0,behavior:'smooth'});
+    expect(document.body.querySelectorAll('.bread-sparkles i')).toHaveLength(9);
+    await user.click(screen.getAllByRole('button',{name:'Back to top'})[0]);
+    expect(document.body.querySelectorAll('.bread-sparkles i')).toHaveLength(9);
+    scrollTo.mockRestore();
+  });
+
+  it('returns to the top without smooth scrolling for reduced-motion users',async()=>{
+    vi.mocked(window.matchMedia).mockImplementation(query=>({matches:query==='(prefers-reduced-motion: reduce)',media:query,onchange:null,addListener:vi.fn(),removeListener:vi.fn(),addEventListener:vi.fn(),removeEventListener:vi.fn(),dispatchEvent:vi.fn()}));
+    const scrollTo=vi.spyOn(window,'scrollTo').mockImplementation(()=>{});
+    const user=userEvent.setup();render(<App/>);
+    await user.click(screen.getAllByRole('button',{name:'Back to top'})[0]);
+    expect(scrollTo).toHaveBeenCalledWith({top:0,behavior:'auto'});
+    expect(document.body.querySelector('.bread-sparkles')).not.toBeInTheDocument();
+    scrollTo.mockRestore();
+  });
+
+  it('does not celebrate from the sticky bakery button',async()=>{
+    const scrollTo=vi.spyOn(window,'scrollTo').mockImplementation(()=>{});
+    const user=userEvent.setup();render(<App/>);
+    await user.click(screen.getAllByRole('button',{name:'Back to top'})[1]);
+    expect(document.body.querySelector('.bread-sparkles')).not.toBeInTheDocument();
+    scrollTo.mockRestore();
   });
 
   it('is hidden by default and opens from the Filters button',async()=>{
