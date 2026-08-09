@@ -35,14 +35,19 @@ Follow the permanent ID, cover naming, classification, formula, and quality-cont
 
 ```sh
 npm run build
-npm run preview
+npm start
 ```
 
-The static site is written to `dist/`.
+The static site is written to `dist/`. The production server binds to `0.0.0.0`
+and uses the platform-provided `PORT`, defaulting to port 3000 locally. It has no
+runtime dependencies, required environment variables, or persistent storage.
 
 ## Deployment
 
-The Vite `base` setting uses relative assets, so `dist/` can be hosted on GitHub Pages or another static host. For GitHub Pages, configure a GitHub Actions workflow that installs dependencies, runs tests, builds, and publishes `dist/`, or deploy `dist/` from a Pages branch. No deployment is performed automatically by this repository.
+The Vite `base` setting uses relative assets, so `dist/` can be hosted on Railway,
+GitHub Pages, a container, or another static host. On a Node hosting platform, use
+`npm ci`, `npm run build`, and `npm start`. `PORT` is supplied by the host and is
+the only supported runtime setting; it is operational rather than secret.
 
 ## Public/private boundary
 
