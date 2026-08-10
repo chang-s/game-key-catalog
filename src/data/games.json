@@ -154,7 +154,7 @@
       "Battlenet": 1,
       "PlayStation 5": 1
     },
-    "primaryKeys": 4,
+    "primaryKeys": 5,
     "otherRegionKeys": 5,
     "otherRegionInventory": [
       {
@@ -3197,9 +3197,9 @@
     "edition": "Multiple Editions",
     "imageFilename": "183-killer-instinct.png",
     "platformQuantities": {
-      "Steam": 2
+      "Steam": 1
     },
-    "primaryKeys": 2,
+    "primaryKeys": 1,
     "otherRegionKeys": 0,
     "availability": "Available",
     "notes": "The two Steam options are the full game and The Complete Soundtrack.",
