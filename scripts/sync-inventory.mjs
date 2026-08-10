@@ -29,7 +29,7 @@ row.push(cell);
 if (row.some(Boolean)) rows.push(row);
 
 const headers = rows.shift();
-const required = ['Item ID', 'Title', 'Offer Type', 'Genre', 'Image Filename', 'Primary Keys', 'Other Region Keys', 'Availability', 'Date Added', 'Active'];
+const required = ['Item ID', 'Title', 'Offer Type', 'Genre', 'Image Filename', 'Primary Keys', 'Other Region Keys', 'Date Added', 'Active'];
 for (const h of required) if (!headers.includes(h)) throw new Error(`Missing required column: ${h}`);
 
 const platforms = ['Xbox Play Anywhere', 'Xbox', 'Windows 10', 'Game Pass', 'Steam', 'Oculus', 'Battlenet', 'PlayStation 5', 'Mobile'];
@@ -46,8 +46,18 @@ const parseOtherRegionInventory = details => details.split(';').flatMap(group =>
   }).filter(Boolean);
 });
 
+const sumQuantities = quantities => Object.values(quantities).reduce((total, quantity) => total + quantity, 0);
+const deriveAvailability = ({ platformQuantities, otherRegionInventory, otherRegionKeys }) => {
+  if (sumQuantities(platformQuantities) > 0) return 'Available';
+  if ((otherRegionInventory || []).some(item => item.quantity > 0) || otherRegionKeys > 0) return 'Other Regions Only';
+  return 'Out of Stock';
+};
+
 const games = rows.filter(r => get(r, 'Item ID')).map(r => {
   const otherRegionDetails = get(r, 'Other Region Details');
+  const platformQuantities = Object.fromEntries(platforms.map(p => [p, num(r, p)]).filter(([, v]) => v > 0));
+  const otherRegionInventory = otherRegionDetails ? parseOtherRegionInventory(otherRegionDetails) : undefined;
+  const otherRegionKeys = num(r, 'Other Region Keys');
   return {
     id: get(r, 'Item ID').padStart(3, '0'),
     title: get(r, 'Title'),
@@ -55,11 +65,11 @@ const games = rows.filter(r => get(r, 'Item ID')).map(r => {
     genre: get(r, 'Genre'),
     ...(get(r, 'Edition / Item') && { edition: get(r, 'Edition / Item') }),
     imageFilename: normalizeCoverFilename(path.basename(get(r, 'Image Filename')), coverIndex, { id: get(r, 'Item ID').padStart(3, '0'), title: get(r, 'Title') }),
-    platformQuantities: Object.fromEntries(platforms.map(p => [p, num(r, p)]).filter(([, v]) => v > 0)),
+    platformQuantities,
     primaryKeys: num(r, 'Primary Keys'),
-    otherRegionKeys: num(r, 'Other Region Keys'),
-    ...(otherRegionDetails && { otherRegionInventory: parseOtherRegionInventory(otherRegionDetails) }),
-    availability: get(r, 'Availability'),
+    otherRegionKeys,
+    ...(otherRegionInventory && { otherRegionInventory }),
+    availability: deriveAvailability({ platformQuantities, otherRegionInventory, otherRegionKeys }),
     ...(get(r, 'Region / Restrictions') && { regionRestrictions: get(r, 'Region / Restrictions') }),
     ...(get(r, 'Notes') && { notes: get(r, 'Notes') }),
     dateAdded: get(r, 'Date Added'),
@@ -73,8 +83,11 @@ if (tokenPattern.test(serialized)) throw new Error('Possible redemption token fo
 for (const g of games) {
   if (!/^\d{3}$/.test(g.id)) throw new Error(`Invalid Item ID: ${g.id}`);
   if (g.imageFilename.includes('/') || g.imageFilename.includes('\\')) throw new Error(`Unsafe image filename for ${g.id}`);
+  const primaryTotal = sumQuantities(g.platformQuantities);
+  if (primaryTotal !== g.primaryKeys) throw new Error(`Primary Keys total does not match platform quantities for ${g.id}`);
   const regionalTotal = (g.otherRegionInventory || []).reduce((total, item) => total + item.quantity, 0);
   if (regionalTotal !== g.otherRegionKeys) throw new Error(`Other Region Details total does not match Other Region Keys for ${g.id}`);
+  if (g.availability !== deriveAvailability(g)) throw new Error(`Availability does not match inventory quantities for ${g.id}`);
 }
 
 const gamesUrl = new URL('../src/data/games.json', import.meta.url);

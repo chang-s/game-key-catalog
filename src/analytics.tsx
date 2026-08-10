@@ -2,6 +2,7 @@ import { PostHogProvider } from '@posthog/react';
 import posthog from 'posthog-js';
 import type { ReactNode } from 'react';
 import type { Game } from './types';
+import { getGameAvailability } from './inventory';
 
 const posthogToken = import.meta.env.VITE_POSTHOG_PROJECT_TOKEN?.trim();
 const posthogHost = import.meta.env.VITE_POSTHOG_HOST?.trim() || 'https://us.i.posthog.com';
@@ -48,7 +49,7 @@ export function gameAnalyticsProperties(game: Game) {
   return {
     game_id: game.id,
     game_title: game.title,
-    availability: game.availability,
+    availability: getGameAvailability(game),
     platforms: Object.entries(game.platformQuantities)
       .filter(([, quantity]) => (quantity ?? 0) > 0)
       .map(([platform]) => platform),

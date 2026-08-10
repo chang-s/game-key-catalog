@@ -154,7 +154,7 @@
       "Battlenet": 1,
       "PlayStation 5": 1
     },
-    "primaryKeys": 5,
+    "primaryKeys": 4,
     "otherRegionKeys": 5,
     "otherRegionInventory": [
       {
@@ -3196,12 +3196,10 @@
     "genre": "Fighting",
     "edition": "Multiple Editions",
     "imageFilename": "183-killer-instinct.png",
-    "platformQuantities": {
-      "Steam": 1
-    },
-    "primaryKeys": 1,
+    "platformQuantities": {},
+    "primaryKeys": 0,
     "otherRegionKeys": 0,
-    "availability": "Available",
+    "availability": "Out of Stock",
     "notes": "The two Steam options are the full game and The Complete Soundtrack.",
     "dateAdded": "2026-08-09",
     "active": true

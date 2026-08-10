@@ -2,6 +2,7 @@ import { useEffect, useMemo, useRef, useState, type Ref } from 'react';
 import { ArrowLeft, Check, Copy, Globe2, X } from 'lucide-react';
 import type { Game } from '../types';
 import { captureAnalyticsEvent, gameAnalyticsProperties } from '../analytics';
+import { getGameAvailability } from '../inventory';
 
 export type RequestChoice =
   | { kind: 'primary'; platform: string; quantity: number }
@@ -70,7 +71,7 @@ function GameMetadata({ game }: { game: Game }) {
   return <dl>
     <div><dt>Genre</dt><dd>{game.genre}</dd></div>
     {game.edition && <div><dt>Edition / item</dt><dd>{game.edition}</dd></div>}
-    <div><dt>Availability</dt><dd>{game.availability}</dd></div>
+    <div><dt>Availability</dt><dd>{getGameAvailability(game)}</dd></div>
   </dl>;
 }
 
