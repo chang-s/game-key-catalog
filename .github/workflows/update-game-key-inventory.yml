@@ -1,0 +1,106 @@
+name: Update Game Key Inventory
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: write
+  actions: write
+
+concurrency:
+  group: update-game-key-inventory
+  cancel-in-progress: false
+
+env:
+  INVENTORY_CSV_URL: "https://docs.google.com/spreadsheets/d/e/2PACX-1vT_4Ao8_biSciorW0wthGhVaGZHCor5y9KAEa3CMsFV0BXSalJKDW_0ztZjgIarcGo1zAkw2-cEIhxr/pub?gid=1158755501&single=true&output=csv"
+  INVENTORY_DATA_FILES: src/data/games.json src/data/inventory-meta.json
+  TARGET_BRANCH: main
+
+jobs:
+  sync:
+    name: Sync inventory from Google Sheet
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Confirm target branch
+        run: |
+          if [ "$GITHUB_REF_NAME" != "$TARGET_BRANCH" ]; then
+            echo "Run this workflow from the $TARGET_BRANCH branch. Current branch: $GITHUB_REF_NAME"
+            exit 1
+          fi
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 24.19.0
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Download Google Sheet CSV export
+        run: |
+          curl --fail --location --silent --show-error \
+            "$INVENTORY_CSV_URL" \
+            --output "$RUNNER_TEMP/game-inventory.csv"
+
+      - name: Sync website inventory data
+        run: npm run sync -- "$RUNNER_TEMP/game-inventory.csv"
+
+      - name: Validate inventory JSON
+        run: |
+          node -e "JSON.parse(require('node:fs').readFileSync('src/data/games.json','utf8'))"
+          node -e "const meta=JSON.parse(require('node:fs').readFileSync('src/data/inventory-meta.json','utf8')); if (!Number.isFinite(Date.parse(meta.lastUpdated))) throw new Error('Invalid inventory lastUpdated')"
+
+      - name: Ensure only inventory data changed
+        run: |
+          unexpected="$(git status --porcelain --untracked-files=all | awk -v allowed="$INVENTORY_DATA_FILES" 'index(" " allowed " ", " " $2 " ") == 0 { print }')"
+          if [ -n "$unexpected" ]; then
+            echo "Unexpected changed files:"
+            echo "$unexpected"
+            exit 1
+          fi
+
+      - name: Run tests
+        run: npm test
+
+      - name: Build site
+        env:
+          VITE_POSTHOG_PROJECT_TOKEN: ${{ vars.VITE_POSTHOG_PROJECT_TOKEN }}
+          VITE_POSTHOG_HOST: ${{ vars.VITE_POSTHOG_HOST }}
+        run: npm run build
+
+      - name: Re-check changed files
+        run: |
+          unexpected="$(git status --porcelain --untracked-files=all | awk -v allowed="$INVENTORY_DATA_FILES" 'index(" " allowed " ", " " $2 " ") == 0 { print }')"
+          if [ -n "$unexpected" ]; then
+            echo "Unexpected changed files:"
+            echo "$unexpected"
+            exit 1
+          fi
+
+      - name: Commit inventory changes
+        id: commit
+        run: |
+          if git diff --quiet -- $INVENTORY_DATA_FILES; then
+            echo "changed=false" >> "$GITHUB_OUTPUT"
+            echo "No inventory changes to commit."
+            exit 0
+          fi
+
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add $INVENTORY_DATA_FILES
+          git commit -m "Update game key inventory"
+          git push origin "HEAD:${GITHUB_REF_NAME}"
+          echo "changed=true" >> "$GITHUB_OUTPUT"
+
+      - name: Dispatch Pages deployment
+        if: steps.commit.outputs.changed == 'true'
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: gh workflow run deploy-pages.yml --ref "$GITHUB_REF_NAME"

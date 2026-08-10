@@ -2,6 +2,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
 import { Clock3, Search, SlidersHorizontal, X } from 'lucide-react';
 import rawGames from './data/games.json';
+import inventoryMeta from './data/inventory-meta.json';
 import type { Availability, Game } from './types';
 import { filterGames } from './catalog';
 import { FilterPanel } from './components/FilterPanel';
@@ -12,7 +13,7 @@ import { captureAnalyticsEvent, discoveryMethod, filterStateKey, gameAnalyticsPr
 type Sort='az'|'recent'|'keys';
 type FilterKind='platforms'|'genres'|'offers';
 
-const updatedLabel=new Intl.DateTimeFormat('en-US',{month:'short',day:'numeric',year:'numeric',timeZone:'America/Los_Angeles'}).format(new Date(__LAST_UPDATED__));
+const updatedLabel=new Intl.DateTimeFormat('en-US',{month:'short',day:'numeric',year:'numeric',timeZone:'America/Los_Angeles'}).format(new Date(inventoryMeta.lastUpdated));
 const seattleTimeFormatter=new Intl.DateTimeFormat('en-US',{hour:'numeric',minute:'2-digit',timeZone:'America/Los_Angeles'});
 
 function SeattleClock(){
@@ -144,7 +145,7 @@ export default function App(){
   return <>
     <header className="masthead" ref={mastheadRef}>
       <img className="masthead-art" src="./brand/bear-bakery-banner.webp" alt="" aria-hidden="true" />
-      <div className="brand"><BakeryButton className="mark" celebrate/><div><h1>Sola’s Game Key Bakery</h1><p>Fresh game keys looking for a good home ♡</p><div className="bakery-meta"><span>Last updated · <time dateTime={__LAST_UPDATED__}>{updatedLabel}</time></span><SeattleClock/></div></div></div>
+      <div className="brand"><BakeryButton className="mark" celebrate/><div><h1>Sola’s Game Key Bakery</h1><p>Fresh game keys looking for a good home ♡</p><div className="bakery-meta"><span>Last updated · <time dateTime={inventoryMeta.lastUpdated}>{updatedLabel}</time></span><SeattleClock/></div></div></div>
       <p className="intro">I get extra game keys from time to time and share them with friends. Find one you’d enjoy and copy a request!</p>
     </header>
     <main>
