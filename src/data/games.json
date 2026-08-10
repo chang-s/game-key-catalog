@@ -151,10 +151,9 @@
     "platformQuantities": {
       "Xbox": 1,
       "Steam": 1,
-      "Battlenet": 1,
       "PlayStation 5": 1
     },
-    "primaryKeys": 4,
+    "primaryKeys": 3,
     "otherRegionKeys": 5,
     "otherRegionInventory": [
       {
