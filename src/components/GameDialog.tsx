@@ -46,8 +46,11 @@ function requestChoiceAnalyticsProperties(choice: RequestChoice) {
 }
 
 function GameHeader({ game, className = '', onBack }: { game: Game; className?: string; onBack?: () => void }) {
+  const [hasCover, setHasCover] = useState(Boolean(game.imageFilename));
+  useEffect(() => setHasCover(Boolean(game.imageFilename)), [game.imageFilename]);
+
   return <div className={`dialog-header ${className}`}>
-    <img className="dialog-cover" src={`./covers/${game.imageFilename}`} alt="" />
+    {hasCover ? <img className="dialog-cover" src={`./covers/${game.imageFilename}`} alt="" onError={() => setHasCover(false)} /> : <div className="dialog-cover missing" aria-hidden="true" />}
     {onBack && <button className="desktop-artwork-back" onClick={onBack}><ArrowLeft size={17} aria-hidden="true" />Back</button>}
     <div className="dialog-header-overlay" aria-hidden="true">
       <strong>{game.title}</strong>

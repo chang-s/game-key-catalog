@@ -1,5 +1,6 @@
 import fs from 'node:fs';
 import path from 'node:path';
+import { buildCoverIndex, normalizeCoverFilename } from './cover-assets.mjs';
 
 const input = process.argv[2];
 if (!input) throw new Error('Usage: npm run sync -- path/to/export.csv');
@@ -36,6 +37,7 @@ const platformAliases = new Map([['PS5', 'PlayStation 5']]);
 const normalizePlatform = platform => platformAliases.get(platform.trim()) ?? platform.trim();
 const get = (r, h) => r[headers.indexOf(h)]?.trim() || '';
 const num = (r, h) => Number(get(r, h) || 0);
+const coverIndex = buildCoverIndex(new URL('../public/covers', import.meta.url));
 const parseOtherRegionInventory = details => details.split(';').flatMap(group => {
   const [platform, ...regions] = group.split(':');
   return regions.join(':').split(',').map(value => {
@@ -52,7 +54,7 @@ const games = rows.filter(r => get(r, 'Item ID')).map(r => {
     offerType: get(r, 'Offer Type'),
     genre: get(r, 'Genre'),
     ...(get(r, 'Edition / Item') && { edition: get(r, 'Edition / Item') }),
-    imageFilename: path.basename(get(r, 'Image Filename')),
+    imageFilename: normalizeCoverFilename(path.basename(get(r, 'Image Filename')), coverIndex, { id: get(r, 'Item ID').padStart(3, '0'), title: get(r, 'Title') }),
     platformQuantities: Object.fromEntries(platforms.map(p => [p, num(r, p)]).filter(([, v]) => v > 0)),
     primaryKeys: num(r, 'Primary Keys'),
     otherRegionKeys: num(r, 'Other Region Keys'),

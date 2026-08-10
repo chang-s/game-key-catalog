@@ -1,12 +1,17 @@
+import { useEffect, useState } from 'react';
 import { Globe2 } from 'lucide-react';
 import type { Game } from '../types';
 
 export function GameCard({game,onOpen}:{game:Game;onOpen:(g:Game)=>void}) {
+  const [hasCover, setHasCover] = useState(Boolean(game.imageFilename));
+  useEffect(() => setHasCover(Boolean(game.imageFilename)), [game.imageFilename]);
   const entries=Object.entries(game.platformQuantities).filter(([,q])=>q>0);
   const stateClass=game.availability==='Available'?'is-available':game.availability==='Other Regions Only'?'is-regional':'is-out';
   return <article className={`card ${stateClass}`}>
     <button className="card-main" onClick={()=>onOpen(game)} aria-label={`View details for ${game.title}`}>
-      <div className="cover-wrap"><img src={`./covers/${game.imageFilename}`} alt={`${game.title} cover`} loading="lazy" onError={e=>{e.currentTarget.hidden=true;e.currentTarget.parentElement?.classList.add('missing')}} /></div>
+      <div className={`cover-wrap${hasCover ? '' : ' missing'}`}>
+        {hasCover && <img src={`./covers/${game.imageFilename}`} alt={`${game.title} cover`} loading="lazy" onError={() => setHasCover(false)} />}
+      </div>
       <div className="card-body">
         <p className="eyebrow">{game.offerType}</p><h2>{game.title}</h2>
         <div className="platform-list">

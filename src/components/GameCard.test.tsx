@@ -1,4 +1,4 @@
-import { cleanup, render, screen } from '@testing-library/react';
+import { cleanup, fireEvent, render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import { GameCard } from './GameCard';
@@ -40,5 +40,13 @@ describe('GameCard', () => {
     expect(screen.getByText('Other regions only')).toBeInTheDocument();
     rerender(<GameCard game={{...game, primaryKeys: 0, otherRegionKeys: 0, platformQuantities: {}, availability: 'Out of Stock'}} onOpen={() => undefined} />);
     expect(screen.getByText('Out of Stock')).toHaveClass('out');
+  });
+
+  it('removes failed cover images before showing the fallback state', () => {
+    const { container } = render(<GameCard game={game} onOpen={() => undefined} />);
+    const image = screen.getByAltText('Halo: Campaign Evolved cover');
+    fireEvent.error(image);
+    expect(container.querySelector('.cover-wrap')).toHaveClass('missing');
+    expect(screen.queryByAltText('Halo: Campaign Evolved cover')).not.toBeInTheDocument();
   });
 });

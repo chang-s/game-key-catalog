@@ -8,11 +8,11 @@
   },
   "scripts": {
     "dev": "vite",
-    "build": "tsc -b && vite build",
+    "build": "node scripts/validate-cover-images.mjs && tsc -b && vite build",
     "preview": "vite preview",
     "test": "vitest run",
     "test:browser": "vite build && playwright test",
-    "sync": "node scripts/sync-inventory.mjs"
+    "sync": "node scripts/sync-inventory.mjs && node scripts/validate-cover-images.mjs"
   },
   "dependencies": {
     "@posthog/react": "1.10.3",

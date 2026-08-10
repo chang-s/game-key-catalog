@@ -195,7 +195,7 @@
     "offerType": "Game Add-on",
     "genre": "Shooter",
     "edition": "Navigator: Tracer Pack",
-    "imageFilename": "010-code-navigator-tracer-pack.png",
+    "imageFilename": "010-code-navigator-tracer-pack.webp",
     "platformQuantities": {
       "Xbox Play Anywhere": 1,
       "Steam": 1,
@@ -761,7 +761,7 @@
     "offerType": "Game Add-on",
     "genre": "Roleplaying",
     "edition": "Epic Edition (Pre-Order)",
-    "imageFilename": "036-wow-midnight.png",
+    "imageFilename": "036-wow-midnight.webp",
     "platformQuantities": {},
     "primaryKeys": 0,
     "otherRegionKeys": 3,
@@ -1068,7 +1068,7 @@
     "offerType": "Game Add-on",
     "genre": "Racing & Flying",
     "edition": "Racing Heroes Car Pack",
-    "imageFilename": "053-forza-motorsport-racing-heroes.png",
+    "imageFilename": "053-forza-motorsport-racing-heroes.webp",
     "platformQuantities": {
       "Xbox Play Anywhere": 1,
       "Steam": 1
@@ -1342,7 +1342,7 @@
     "offerType": "Game Add-on",
     "genre": "Roleplaying",
     "edition": "Epic Edition",
-    "imageFilename": "070-wow-classic-mists-of-pandaria.png",
+    "imageFilename": "070-wow-classic-mists-of-pandaria.webp",
     "platformQuantities": {
       "Battlenet": 1
     },
@@ -1513,7 +1513,7 @@
     "offerType": "Full Game",
     "genre": "Strategy",
     "edition": "Multiple Editions",
-    "imageFilename": "079-ara-history-untold.png",
+    "imageFilename": "079-ara-history-untold.webp",
     "platformQuantities": {
       "Windows 10": 1,
       "Steam": 1
@@ -2915,7 +2915,7 @@
     "offerType": "Subscription",
     "genre": "Action & Adventure",
     "edition": "6 month",
-    "imageFilename": "165-minecraft-realms.png",
+    "imageFilename": "165-minecraft-realms.webp",
     "platformQuantities": {},
     "primaryKeys": 0,
     "otherRegionKeys": 0,
