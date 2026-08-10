@@ -12,7 +12,7 @@
     "preview": "vite preview",
     "test": "vitest run",
     "test:browser": "vite build && playwright test",
-    "sync": "node scripts/sync-inventory.mjs && node scripts/validate-cover-images.mjs"
+    "sync": "node scripts/sync.mjs"
   },
   "dependencies": {
     "@posthog/react": "1.10.3",
