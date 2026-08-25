@@ -39,10 +39,9 @@
     "edition": "Premium Edition (Pre-order bundle)",
     "imageFilename": "003-halo-ce-premium.png",
     "platformQuantities": {
-      "Xbox Play Anywhere": 1,
-      "Steam": 1
+      "Xbox Play Anywhere": 1
     },
-    "primaryKeys": 2,
+    "primaryKeys": 1,
     "otherRegionKeys": 0,
     "availability": "Available",
     "dateAdded": "2026-08-08",
