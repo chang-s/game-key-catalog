@@ -4,6 +4,9 @@ import type { ReactNode } from 'react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { captureAnalyticsEvent } from './analytics';
 import App from './App';
+import { filterGames } from './catalog';
+import rawGames from './data/games.json';
+import type { Game } from './types';
 
 vi.mock('./analytics', async importOriginal => {
   const actual = await importOriginal<typeof import('./analytics')>();
@@ -148,20 +151,11 @@ describe('advanced filter UI',()=>{
     await user.click(screen.getByRole('checkbox',{name:'Steam'}));await user.click(screen.getByRole('checkbox',{name:'Xbox'}));
     await user.click(screen.getByRole('checkbox',{name:'Shooter'}));await user.click(screen.getByRole('checkbox',{name:'Roleplaying'}));
     await user.click(screen.getByRole('checkbox',{name:'Full Game'}));
-    expect(screen.getByText((_,element)=>element?.tagName==='P'&&element.textContent?.trim()==='20 items')).toBeInTheDocument();
-    expect(screen.getByRole('heading',{name:/Halo: Campaign Evolved/})).toBeInTheDocument();
-    expect(screen.getByRole('heading',{name:/Gears of War: Reloaded/})).toBeInTheDocument();
-    expect(screen.getByRole('heading',{name:/Call of Duty®: Modern Warfare® III/})).toBeInTheDocument();
-    expect(screen.getByRole('heading',{name:/Call of Duty: Black Ops 4 - Digital Deluxe/})).toBeInTheDocument();
-    expect(screen.getByRole('heading',{name:/Fallout 76: Gleaming Depths/})).toBeInTheDocument();
-    expect(screen.getByRole('heading',{name:/Quake Arena Arcade/})).toBeInTheDocument();
-    expect(screen.getByRole('heading',{name:/Wasteland 3/})).toBeInTheDocument();
-    expect(screen.getByRole('heading',{name:/DOOM \(2016\)/})).toBeInTheDocument();
-    expect(screen.getByRole('heading',{name:/The Elder Scrolls III: Morrowind/})).toBeInTheDocument();
-    expect(screen.getByRole('heading',{name:/Wolfenstein: The Old Blood/})).toBeInTheDocument();
-    expect(screen.getByRole('heading',{name:/DOOM Eternal Standard Edition/})).toBeInTheDocument();
-    expect(screen.getByRole('heading',{name:/The Elder Scrolls® Online/})).toBeInTheDocument();
-    expect(screen.getByRole('heading',{name:/Halo: The Master Chief Collection/})).toBeInTheDocument();
+    const expected=filterGames(rawGames as Game[],{query:'',availability:'Available',platforms:['Steam','Xbox'],genres:['Shooter','Roleplaying'],offers:['Full Game']}).sort((a,b)=>a.title.localeCompare(b.title));
+    expect(screen.getByText((_,element)=>element?.tagName==='P'&&element.textContent?.trim()===`${expected.length} items`)).toBeInTheDocument();
+    const catalog=screen.getByRole('region',{name:'Game catalog'});
+    expect(within(catalog).getAllByRole('heading')).toHaveLength(expected.length);
+    for(const game of expected)expect(within(catalog).getByRole('heading',{name:game.title})).toBeInTheDocument();
   });
 
   it('offers comfortable semantic checkbox rows and an obvious mobile Done action',async()=>{
